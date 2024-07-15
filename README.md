@@ -1,4 +1,4 @@
-# torch_tri3d
+# torchrender3d
 A triangle-projection-based barebones 3D renderer with the most basic steps of the rendering process built from scratch using pytorch. **Purely educational**
 
 # What it's not

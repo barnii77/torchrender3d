@@ -11,9 +11,6 @@ import matplotlib.pyplot as plt
 # TODO: potentially add a way to do fragment shaders (using either cuda or pytorch)
 # TODO: proper gpu support meaning decoupling the rendering from pygame and using pytorch to generate the triangle mask
 
-# !!!!!
-# TODO: textures
-
 pg.init()
 
 SCREEN_SIZE = (1000, 1000)

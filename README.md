@@ -43,8 +43,6 @@ There's just a slight problem... we don't actually know how far away every point
 camera, just how far away the vertices are.
 This is where depth interpolation comes into play.
 
-Now, since I derived a lot of this myself, I believe the following to be a rather unconventional way to do this.
-
 ### Depth interpolation
 1. using the points A, B, C of the 2D projected triangle (result of the vertex projection step) to compute vectors AB and AC
     - AB, AC are the vectors pointing from A to B and C respectively

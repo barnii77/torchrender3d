@@ -105,10 +105,11 @@ class Camera:
         self.x_rot, self.y_rot, self.z_rot = rot
         self.fov = fov
         self.device = device
-        self.focal_width = tan(radians(fov)) / 2
+        self.focal_width = tan(radians(fov / 2))
 
     def fov_scaled_rotation_matrix(self):
-        return rotation_matrix(self.x_rot, self.y_rot, self.z_rot, self.device) / self.focal_width
+        return rotation_matrix(self.x_rot, self.y_rot, self.z_rot, self.device) / torch.tensor(
+            [self.focal_width, self.focal_width, 1], device=self.device)
 
 
 class ObjectModel:
@@ -309,16 +310,16 @@ class ObjectModel:
         # scale and remove z component
         projected_triangles = (projected_triangles3 / z_distances_unsqueezed.abs())[:, :, :2] * SCREEN_SIZE[1]
 
-        if render_without_depth_buffer:
-            surf = pg.surfarray.make_surface(screen_buffer.cpu().detach().numpy())
-            for tri_idx in range(num_processed_triangles):
-                tri = projected_triangles[tri_idx]
-                X, Y = tri[:, 0] + SCREEN_SIZE[0] // 2, tri[:, 1] + SCREEN_SIZE[1] // 2
-                pg.draw.polygon(surf, self.colors[tri_idx].tolist(), (
-                    (X[0].item(), Y[0].item()), (X[1].item(), Y[1].item()),
-                    (X[2].item(), Y[2].item())))
-            screen_buffer[:] = torch.tensor(pg.surfarray.array3d(surf), dtype=screen_buffer.dtype, device=device)
-            return depth_buffer, screen_buffer
+        # if render_without_depth_buffer:
+        #     surf = pg.surfarray.make_surface(screen_buffer.cpu().detach().numpy())
+        #     for tri_idx in range(num_processed_triangles):
+        #         tri = projected_triangles[tri_idx]
+        #         X, Y = tri[:, 0] + SCREEN_SIZE[0] // 2, tri[:, 1] + SCREEN_SIZE[1] // 2
+        #         pg.draw.polygon(surf, self.textures[tri_idx].tolist(), (
+        #             (X[0].item(), Y[0].item()), (X[1].item(), Y[1].item()),
+        #             (X[2].item(), Y[2].item())))
+        #     screen_buffer[:] = torch.tensor(pg.surfarray.array3d(surf), dtype=screen_buffer.dtype, device=device)
+        #     return depth_buffer, screen_buffer
 
         # compute depth buffers
         if depth_buffer is None:
@@ -376,14 +377,14 @@ class PygameDisplayManager:
         self.screen_width, self.screen_height = SCREEN_SIZE
         self.win = pg.display.set_mode(SCREEN_SIZE)
 
-    def render(self, model: ObjectModel, camera: Camera, render_without_depth_buffer=False):
+    def render(self, model: ObjectModel, camera: Camera):  # render_without_depth_buffer=False
         # w, h = SCREEN_SIZE
         # centered_triangles = model.triangles + torch.tensor([w, h]) / 2
         # for tri in centered_triangles:
         #     pg.draw.polygon(self.win, (255, 255, 255), tri.tolist(), 5)
         depth_buffer, screen_buffer = model.project(
             camera, True, self.depth_buffer,
-            self.screen_buffer, self.tri_idx_buffer, render_without_depth_buffer
+            self.screen_buffer, self.tri_idx_buffer,  # render_without_depth_buffer
         )
         # NOTE: below not needed as render function checks that already
         # TODO probably needed again as I parallelize rendering (for fusing multiple depth / screen buffers)
@@ -414,9 +415,10 @@ def main():
         print("WARNING: CUDA not available, using CPU")
     pdm = PygameDisplayManager(device)
     N_OBJ = 2
-    models = [ObjectModel(MODEL_PATH, (cos(6.28 * t / N_OBJ), sin(6.28 * t / N_OBJ), 7), (0, 1, 1), device) for t in range(N_OBJ) for MODEL_PATH in MODEL_PATHS]
+    models = [ObjectModel(MODEL_PATH, (cos(6.28 * t / N_OBJ), sin(6.28 * t / N_OBJ), 7), (0, 1, 1), device) for t in
+              range(N_OBJ) for MODEL_PATH in MODEL_PATHS]
     n_triangles = sum(model.triangles.shape[0] for model in models)
-    camera = Camera((0, 0, 0), (0, 0, 0), 0.1, device)
+    camera = Camera((0, 0, 0), (0, 0, 0), 120, device)
     clock = pg.time.Clock()
     font = pg.font.Font(None, 30)
     n_frames = 0

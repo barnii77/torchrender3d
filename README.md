@@ -1,5 +1,6 @@
 # torchrender3d
 A triangle-projection-based barebones 3D renderer with the most basic steps of the rendering process built from scratch using pytorch. **Purely educational**
+![](assets/renderer_screenshot.png)
 
 # What it's not
 - A game engine

@@ -305,8 +305,6 @@ class ObjectModel:
             projected_triangles3)  # number of triangles actually being processed (-> not out of screen)
 
         z_distances_unsqueezed = z_distances.reshape(z_distances.shape + (1,))  # unsqueeze(-1)
-        # TODO maybe add focal length in denominator?
-        # TODO remove this * 1000 scaling by figuring out focal lengths
         # scale and remove z component
         projected_triangles = (projected_triangles3 / z_distances_unsqueezed.abs())[:, :, :2] * SCREEN_SIZE[1]
 
